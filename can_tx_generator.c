@@ -37,6 +37,8 @@
 #include "can_common.h"
 
 tCANMsgObject tx_msg_object;
+volatile unsigned long count = 0;
+unsigned char tx_buffer[8];
 
 
 
@@ -83,20 +85,21 @@ void CANHandler(void)
 // This functions sends out a button update message.
 //
 //*****************************************************************************
-void SendMessage(void)
+void SendMessage(unsigned char *data)
 {
     tx_msg_object.ulFlags = MSG_OBJ_EXTENDED_ID;
     tx_msg_object.ulMsgID = 0x10;
     tx_msg_object.ulMsgIDMask = 0;
     tx_msg_object.ulMsgLen = 8;
-    tx_msg_object.pucMsgData[0] = 0x01;
-    tx_msg_object.pucMsgData[1] = 0x02;
-    tx_msg_object.pucMsgData[2] = 0x03;
-    tx_msg_object.pucMsgData[3] = 0x04;
-    tx_msg_object.pucMsgData[4] = 0x05;
-    tx_msg_object.pucMsgData[5] = 0x06;
-    tx_msg_object.pucMsgData[6] = 0x07;
-    tx_msg_object.pucMsgData[7] = 0x08;
+    tx_msg_object.pucMsgData = data;                //allocate memory for TX buffer
+    tx_msg_object.pucMsgData[0] = 2;
+    tx_msg_object.pucMsgData[1] = 3;
+    tx_msg_object.pucMsgData[2] = 4;
+    tx_msg_object.pucMsgData[3] = 5;
+    tx_msg_object.pucMsgData[4] = 6;
+    tx_msg_object.pucMsgData[5] = 7;
+    tx_msg_object.pucMsgData[6] = 8;
+    tx_msg_object.pucMsgData[7] = 9;
     CANMessageSet(CAN0_BASE, 1, &tx_msg_object, MSG_OBJ_TYPE_TX);
 }
 
@@ -107,8 +110,11 @@ void SendMessage(void)
 //*****************************************************************************
 void SysTickIntHandler(void)
 {
-
-     SendMessage();
+    if (count < 4)
+    {
+     SendMessage(tx_buffer);   
+    }
+    count++;
 }
 
 
@@ -171,13 +177,14 @@ int main(void)
     //
     // Configure SysTick for a 10ms interrupt.
     //
+    //  1   = 1s - 
     //  100 = 10ms
     //  200 = 5ms
     //  500 = 2ms
     // 1000 = 1ms
     //10000 = 100us
     //20000 = 50us  - this is about the time a max CAN packet (50bytes) needs to be sent at max bit rate of 1Mbps
-    SysTickPeriodSet(SysCtlClockGet() / 20000);
+    SysTickPeriodSet(SysCtlClockGet() / 1);
     SysTickEnable();
     SysTickIntEnable();
 
