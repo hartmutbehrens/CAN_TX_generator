@@ -36,20 +36,9 @@
 #include "driverlib/systick.h"
 #include "can_common.h"
 
+tCANMsgObject tx_msg_object;
 
 
-tCANMsgObject g_MsgObjectTx;
-
-//*****************************************************************************
-static unsigned long const g_ulVersion = CURRENT_VERSION;
-
-//*****************************************************************************
-//
-// This global holds the flags used to indicate the state of the message
-// objects.
-//
-//*****************************************************************************
-static volatile unsigned long g_ulFlags = 0;
 
 //*****************************************************************************
 //
@@ -61,7 +50,6 @@ void __error__(char *pcFilename, unsigned long ulLine)
 {
 }
 #endif
-
 
 
 // The CAN controller interrupt handler.
@@ -97,20 +85,19 @@ void CANHandler(void)
 //*****************************************************************************
 void SendMessage(void)
 {
-    g_MsgObjectTx.ulMsgID = 0x10;
-    g_MsgObjectTx.ulMsgIDMask = 0;
-    g_MsgObjectTx.ulMsgLen = 8;
-    g_MsgObjectTx.pucMsgData[0] = 0x01;
-    g_MsgObjectTx.pucMsgData[1] = 0x02;
-    g_MsgObjectTx.pucMsgData[2] = 0x03;
-    g_MsgObjectTx.pucMsgData[3] = 0x04;
-    g_MsgObjectTx.pucMsgData[4] = 0x05;
-    g_MsgObjectTx.pucMsgData[5] = 0x06;
-    g_MsgObjectTx.pucMsgData[6] = 0x07;
-    g_MsgObjectTx.pucMsgData[7] = 0x08;
-
-
-    CANMessageSet(CAN0_BASE, 1, &g_MsgObjectTx, MSG_OBJ_TYPE_TX);
+    tx_msg_object.ulFlags = MSG_OBJ_EXTENDED_ID;
+    tx_msg_object.ulMsgID = 0x10;
+    tx_msg_object.ulMsgIDMask = 0;
+    tx_msg_object.ulMsgLen = 8;
+    tx_msg_object.pucMsgData[0] = 0x01;
+    tx_msg_object.pucMsgData[1] = 0x02;
+    tx_msg_object.pucMsgData[2] = 0x03;
+    tx_msg_object.pucMsgData[3] = 0x04;
+    tx_msg_object.pucMsgData[4] = 0x05;
+    tx_msg_object.pucMsgData[5] = 0x06;
+    tx_msg_object.pucMsgData[6] = 0x07;
+    tx_msg_object.pucMsgData[7] = 0x08;
+    CANMessageSet(CAN0_BASE, 1, &tx_msg_object, MSG_OBJ_TYPE_TX);
 }
 
 //*****************************************************************************
@@ -120,6 +107,7 @@ void SendMessage(void)
 //*****************************************************************************
 void SysTickIntHandler(void)
 {
+
      SendMessage();
 }
 
@@ -159,7 +147,7 @@ int main(void)
     // controller is fixed at 8MHz for this class of device and the bit rate is
     // set to 250000.
     //
-    CANBitRateSet(CAN0_BASE, 8000000, 250000);
+    CANBitRateSet(CAN0_BASE, 8000000, 1000000);
 
     //
     // Take the CAN0 device out of INIT state.
@@ -183,7 +171,13 @@ int main(void)
     //
     // Configure SysTick for a 10ms interrupt.
     //
-    SysTickPeriodSet(SysCtlClockGet() / 100);
+    //  100 = 10ms
+    //  200 = 5ms
+    //  500 = 2ms
+    // 1000 = 1ms
+    //10000 = 100us
+    //20000 = 50us  - this is about the time a max CAN packet (50bytes) needs to be sent at max bit rate of 1Mbps
+    SysTickPeriodSet(SysCtlClockGet() / 20000);
     SysTickEnable();
     SysTickIntEnable();
 
