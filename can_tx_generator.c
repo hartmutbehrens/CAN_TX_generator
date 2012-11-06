@@ -85,21 +85,21 @@ void CANHandler(void)
 // This functions sends out a button update message.
 //
 //*****************************************************************************
-void SendMessage(unsigned char *data)
+void SendMessage(unsigned char *data,volatile unsigned long count)
 {
     tx_msg_object.ulFlags = MSG_OBJ_EXTENDED_ID;
     tx_msg_object.ulMsgID = 0x10;
     tx_msg_object.ulMsgIDMask = 0;
     tx_msg_object.ulMsgLen = 8;
     tx_msg_object.pucMsgData = data;                //allocate memory for TX buffer
-    tx_msg_object.pucMsgData[0] = 2;
-    tx_msg_object.pucMsgData[1] = 3;
-    tx_msg_object.pucMsgData[2] = 4;
-    tx_msg_object.pucMsgData[3] = 5;
-    tx_msg_object.pucMsgData[4] = 6;
-    tx_msg_object.pucMsgData[5] = 7;
-    tx_msg_object.pucMsgData[6] = 8;
-    tx_msg_object.pucMsgData[7] = 9;
+    tx_msg_object.pucMsgData[0] = 1 + count;
+    tx_msg_object.pucMsgData[1] = 2 + count;
+    tx_msg_object.pucMsgData[2] = 3 + count;
+    tx_msg_object.pucMsgData[3] = 4 + count;
+    tx_msg_object.pucMsgData[4] = 5 + count;
+    tx_msg_object.pucMsgData[5] = 6 + count;
+    tx_msg_object.pucMsgData[6] = 7 + count;
+    tx_msg_object.pucMsgData[7] = 8 + count;
     CANMessageSet(CAN0_BASE, 1, &tx_msg_object, MSG_OBJ_TYPE_TX);
 }
 
@@ -110,11 +110,12 @@ void SendMessage(unsigned char *data)
 //*****************************************************************************
 void SysTickIntHandler(void)
 {
-    if (count < 4)
-    {
-     SendMessage(tx_buffer);   
-    }
+    SendMessage(tx_buffer,count);   
     count++;
+    if (count == 247)           // data field is 8 bits long, so 255 is max size
+    {
+        count = 0;
+    }
 }
 
 
@@ -177,7 +178,8 @@ int main(void)
     //
     // Configure SysTick for a 10ms interrupt.
     //
-    //  1   = 1s - 
+    //    1 = 1s - 
+    //   10 = 100ms
     //  100 = 10ms
     //  200 = 5ms
     //  500 = 2ms
