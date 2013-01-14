@@ -186,7 +186,7 @@ int main(void)
     // 1000 = 1ms
     //10000 = 100us
     //20000 = 50us  - this is about the time a max CAN packet (50bytes) needs to be sent at max bit rate of 1Mbps
-    SysTickPeriodSet(SysCtlClockGet() / 1);
+    SysTickPeriodSet(SysCtlClockGet() / 10);
     SysTickEnable();
     SysTickIntEnable();
 

@@ -63,7 +63,7 @@ clean:
 # Install - copy to vm_share for now to make available to LM Flash Programmer
 #
 install:
-	@cp gcc/can_tx_generator.bin /home/hartmut/vm_share
+	@echo "flash_load ${PWD}/gcc/can_tx_generator.bin" | telnet localhost 4444
 
 
 #
